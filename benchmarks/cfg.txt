@@ -45,7 +45,7 @@
 
 # 2-level predictor config (<l1size> <l2size> <hist_size> <xor>)
 #-bpred:2lev            1 1024 8 0 
--bpred:2lev            1 2048 11 1
+-bpred:2lev            1 4096 12 1
 
 # perceptron predictor config (<num_perceptrons> <num_weight_bits> <hist_size>)
 -bpred:perceptron      2048 8 8 
