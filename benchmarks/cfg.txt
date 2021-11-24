@@ -1,0 +1,64 @@
+# load configuration from a file
+# -config               
+
+# dump configuration to a file
+# -dumpconfig           
+
+# print help message
+# -h                          false 
+
+# verbose operation
+# -v                          false 
+
+# enable debug message
+# -d                          false 
+
+# start in Dlite debugger
+# -i                          false 
+
+# random number generator seed (0 for timer seed)
+-seed                             1 
+
+# initialize and terminate immediately
+# -q                          false 
+
+# restore EIO trace execution from <fname>
+# -chkpt                     <null> 
+
+# redirect simulator output to file (non-interactive only)
+# -redir:sim                 <null> 
+
+# redirect simulated program output to file
+# -redir:prog                <null> 
+
+# simulator scheduling priority
+-nice                             0 
+
+# maximum number of inst's to execute
+-max:inst                         0 
+
+# branch predictor type {nottaken|taken|bimod|2lev|comb|perceptron}
+#-bpred                        bimod 
+
+# bimodal predictor config (<table size>)
+-bpred:bimod           2048 
+
+# 2-level predictor config (<l1size> <l2size> <hist_size> <xor>)
+#-bpred:2lev            1 1024 8 0 
+-bpred:2lev            1 2048 11 1
+
+# perceptron predictor config (<num_perceptrons> <num_weight_bits> <hist_size>)
+-bpred:perceptron      2048 8 8 
+
+# modified perceptron predictor config (<num_perceptrons> <num_weight_bits> <hist_size>)
+-bpred:modpercept      2048 8 8 
+
+# combining predictor config (<meta_table_size>)
+-bpred:comb            1024 
+
+# return address stack size (0 for no return stack)
+-bpred:ras                        8 
+
+# BTB config (<num_sets> <associativity>)
+-bpred:btb             512 4 
+
