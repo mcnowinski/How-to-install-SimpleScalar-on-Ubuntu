@@ -1028,7 +1028,7 @@ bpred_update(struct bpred_t *pred,	/* branch predictor instance */
           fprintf(stderr, "warning: unsupported n-bit bimodal predictor. defaulting to 2-bit.\n");
       }
 
-      fprintf(stderr, "using counter_max=%d.\n", counter_max);
+//      fprintf(stderr, "using counter_max=%d.\n", counter_max);
 
       if (taken)
 	{
