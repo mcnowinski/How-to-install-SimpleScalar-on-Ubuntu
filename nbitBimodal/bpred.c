@@ -1009,9 +1009,30 @@ bpred_update(struct bpred_t *pred,	/* branch predictor instance */
   /* update state (but not for jumps) */
   if (dir_update_ptr->pdir1)
     {
+//matt I think this is where the magic is!
+//this is where we increment the predictor to be *more* taken or untaken
+//for a saturating counter, the min is 0 and the max is determined by the number of bits, i.e. 2^n-1
+      int counter_max;
+      switch(pred->class) {
+        case BPred4bit:
+          counter_max = 15;
+          break;
+        case BPred3bit:
+          counter_max = 7;
+          break;
+        case BPred2bit:
+          counter_max = 3;
+          break;
+        default:
+          counter_max = 3;
+          fprintf(stderr, "warning: unsupported n-bit bimodal predictor. defaulting to 2-bit.\n");
+      }
+
+      fprintf(stderr, "using counter_max=%d.\n", counter_max);
+
       if (taken)
 	{
-	  if (*dir_update_ptr->pdir1 < 3)
+	  if (*dir_update_ptr->pdir1 < counter_max)
 	    ++*dir_update_ptr->pdir1;
 	}
       else
@@ -1020,6 +1041,7 @@ bpred_update(struct bpred_t *pred,	/* branch predictor instance */
 	    --*dir_update_ptr->pdir1;
 	}
     }
+//matt
 
   /* combining predictor also updates second predictor and meta predictor */
   /* second direction predictor */
