@@ -264,15 +264,17 @@ sim_check_options(struct opt_odb_t *odb, int argc, char **argv)
       /* combining predictor, bpred_create() checks args */
       if (twolev_nelt != 4)
 	fatal("bad 2-level pred config (<l1size> <l2size> <hist_size> <xor>)");
-//matt ignore # bits for comb predictor. this is kind of messy.
-      if (bimod_nelt != 1)
-	fatal("bad bimod predictor config (<table_size>)");
-//matt
+//matt comb predictor assumes 2 bit. this is kind of messy.
+      if (bimod_nelt != 2)
+	fatal("bad bimod predictor config (<table_size> <# bits>)");
       if (comb_nelt != 1)
 	fatal("bad combining predictor config (<meta_table_size>)");
       if (btb_nelt != 2)
 	fatal("bad btb config (<num_sets> <associativity>)");
 
+  if(bimod_config[1] != 2)
+    fprintf(stderr, "warning: unsupported n-bit bimodal predictor. defaulting to 2-bit.\n");
+//matt
       pred = bpred_create(BPredComb,
 			  /* bimod table size */bimod_config[0],
 			  /* l1 size */twolev_config[0],

@@ -84,7 +84,7 @@ bpred_create(enum bpred_class class,	/* type of predictor to create */
 
   switch (class) {
   case BPredComb:
-//matt leave these 2-bit predictors as is. they are for the tournament combined predictor
+//matt leave these 2-bit predictors as is. they are for the comb[ined] predictor
     /* bimodal component */
     pred->dirpred.bimod = 
       bpred_dir_create(BPred2bit, bimod_size, 0, 0, 0);
@@ -257,6 +257,52 @@ bpred_dir_create (
       }
 
     break;
+
+//matt add the 3 and 4-bit predictors
+  case BPred3bit:
+//this is all table size stuff. leave it - except to change 2bit to nbit
+    if (!l1size || (l1size & (l1size-1)) != 0)
+      fatal("3bit table size, `%d', must be non-zero and a power of two", 
+	    l1size);
+    pred_dir->config.bimod.size = l1size;
+    if (!(pred_dir->config.bimod.table =
+	  calloc(l1size, sizeof(unsigned char))))
+      fatal("cannot allocate 3bit storage");
+//this intializes the branch history table
+//for 2bit, this goes 1, 2, 1, 2, 1, 2... where 1 and 2 are the *threshold* weakly untaken and taken
+//for 3bit, this should go? 3, 4, 3, 4, 3, 4, 3, 4...   
+    /* initialize counters to weakly this-or-that */
+    flipflop = 3;
+    for (cnt = 0; cnt < l1size; cnt++)
+      {
+	pred_dir->config.bimod.table[cnt] = flipflop;
+	flipflop = 7 - flipflop;
+      }
+
+    break;
+
+  case BPred4bit:
+//this is all table size stuff. leave it - except to change 2bit to nbit
+    if (!l1size || (l1size & (l1size-1)) != 0)
+      fatal("3bit table size, `%d', must be non-zero and a power of two", 
+	    l1size);
+    pred_dir->config.bimod.size = l1size;
+    if (!(pred_dir->config.bimod.table =
+	  calloc(l1size, sizeof(unsigned char))))
+      fatal("cannot allocate 3bit storage");
+//this intializes the branch history table
+//for 2bit, this goes 1, 2, 1, 2, 1, 2... where 1 and 2 are the *threshold* weakly untaken and taken
+//for 4bit, this should go? 7, 8, 7, 8, 7, 8, 7, 8...    
+    /* initialize counters to weakly this-or-that */
+    flipflop = 7;
+    for (cnt = 0; cnt < l1size; cnt++)
+      {
+	pred_dir->config.bimod.table[cnt] = flipflop;
+	flipflop = 15 - flipflop;
+      }
+
+    break;
+//matt
 
   case BPredTaken:
   case BPredNotTaken:
