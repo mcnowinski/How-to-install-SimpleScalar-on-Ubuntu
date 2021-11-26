@@ -98,7 +98,7 @@ bpred_create(enum bpred_class class,	/* type of predictor to create */
       bpred_dir_create(BPred2bit, meta_size, 0, 0, 0);
 
     break;
-
+//matt
   case BPred2Level:
     pred->dirpred.twolev = 
       bpred_dir_create(class, l1size, l2size, shift_width, xor);
@@ -108,7 +108,7 @@ bpred_create(enum bpred_class class,	/* type of predictor to create */
   case BPred2bit:
 //matt add 3 and 4-bit predictors here
 //we will use the "class" argument to identify the 2, 3, and 4-bit predictors in bpred_dir_create
-//NOTE: the last 3 params are the same for any n-bit bimodal predictor
+//the last 3 params are the same for any n-bit bimodal predictor
   case BPred3bit:
   case BPred4bit:
 //matt
@@ -129,6 +129,10 @@ bpred_create(enum bpred_class class,	/* type of predictor to create */
   case BPredComb:
   case BPred2Level:
   case BPred2bit:
+//matt add 3 and 4-bit predictors here. this section builds branch table buffer
+  case BPred3bit:
+  case BPred4bit:
+//    
     {
       int i;
 
@@ -269,8 +273,9 @@ bpred_dir_create (
 	  calloc(l1size, sizeof(unsigned char))))
       fatal("cannot allocate 3bit storage");
 //this intializes the branch history table
+//the idea is to initialize them with either the *weakest* taken or *weakest* untaken
 //for 2bit, this goes 1, 2, 1, 2, 1, 2... where 1 and 2 are the *threshold* weakly untaken and taken
-//for 3bit, this should go? 3, 4, 3, 4, 3, 4, 3, 4...   
+//for 3bit, this goes 3, 4, 3, 4, 3, 4, 3, 4...   
     /* initialize counters to weakly this-or-that */
     flipflop = 3;
     for (cnt = 0; cnt < l1size; cnt++)
@@ -284,13 +289,14 @@ bpred_dir_create (
   case BPred4bit:
 //this is all table size stuff. leave it - except to change 2bit to nbit
     if (!l1size || (l1size & (l1size-1)) != 0)
-      fatal("3bit table size, `%d', must be non-zero and a power of two", 
+      fatal("4bit table size, `%d', must be non-zero and a power of two", 
 	    l1size);
     pred_dir->config.bimod.size = l1size;
     if (!(pred_dir->config.bimod.table =
 	  calloc(l1size, sizeof(unsigned char))))
-      fatal("cannot allocate 3bit storage");
+      fatal("cannot allocate 4bit storage");
 //this intializes the branch history table
+//the idea is to initialize them with either the *weakest* taken or *weakest* untaken
 //for 2bit, this goes 1, 2, 1, 2, 1, 2... where 1 and 2 are the *threshold* weakly untaken and taken
 //for 4bit, this should go? 7, 8, 7, 8, 7, 8, 7, 8...    
     /* initialize counters to weakly this-or-that */
@@ -336,6 +342,19 @@ bpred_dir_config(
       name, pred_dir->config.bimod.size);
     break;
 
+//matt add 3 and 4-bit predictors here
+//this is just to print out the configs
+  case BPred3bit:
+    fprintf(stream, "pred_dir: %s: 3-bit: %d entries, direct-mapped\n",
+      name, pred_dir->config.bimod.size);
+    break;
+
+  case BPred4bit:
+    fprintf(stream, "pred_dir: %s: 4-bit: %d entries, direct-mapped\n",
+      name, pred_dir->config.bimod.size);
+    break;    
+//matt
+
   case BPredTaken:
     fprintf(stream, "pred_dir: %s: predict taken\n", name);
     break;
@@ -371,12 +390,18 @@ bpred_config(struct bpred_t *pred,	/* branch predictor instance */
     fprintf(stream, "ret_stack: %d entries", pred->retstack.size);
     break;
 
+
+//matt add 3 and 4-bit predictors here
+//this is just to print out the configs
   case BPred2bit:
+  case BPred3bit:
+  case BPred4bit: 
     bpred_dir_config (pred->dirpred.bimod, "bimod", stream);
     fprintf(stream, "btb: %d sets x %d associativity", 
 	    pred->btb.sets, pred->btb.assoc);
     fprintf(stream, "ret_stack: %d entries", pred->retstack.size);
     break;
+//matt
 
   case BPredTaken:
     bpred_dir_config (pred->dirpred.bimod, "taken", stream);
@@ -417,9 +442,18 @@ bpred_reg_stats(struct bpred_t *pred,	/* branch predictor instance */
     case BPred2Level:
       name = "bpred_2lev";
       break;
+//matt add 3 and 4-bit predictors here
+//this is just to print out the configs      
     case BPred2bit:
-      name = "bpred_bimod";
+      name = "bpred_bimod_2bit";
       break;
+    case BPred3bit:
+      name = "bpred_bimod_3bit";
+      break;
+    case BPred4bit:
+      name = "bpred_bimod_4bit";
+      break; 
+//matt                 
     case BPredTaken:
       name = "bpred_taken";
       break;
@@ -583,9 +617,13 @@ bpred_dir_lookup(struct bpred_dir_t *pred_dir,	/* branch dir predictor inst */
         p = &pred_dir->config.two.l2table[l2index];
       }
       break;
+//matt add 3 and 4-bit predictors here      
     case BPred2bit:
+    case BPred3bit:
+    case BPred4bit:        
       p = &pred_dir->config.bimod.table[BIMOD_HASH(pred_dir, baddr)];
       break;
+//matt      
     case BPredTaken:
     case BPredNotTaken:
       break;
@@ -662,13 +700,17 @@ bpred_lookup(struct bpred_t *pred,	/* branch predictor instance */
 	    bpred_dir_lookup (pred->dirpred.twolev, baddr);
 	}
       break;
+//matt add 3 and 4-bit predictors here       
     case BPred2bit:
+    case BPred3bit:
+    case BPred4bit:        
       if ((MD_OP_FLAGS(op) & (F_CTRL|F_UNCOND)) != (F_CTRL|F_UNCOND))
 	{
 	  dir_update_ptr->pdir1 =
 	    bpred_dir_lookup (pred->dirpred.bimod, baddr);
 	}
       break;
+//matt      
     case BPredTaken:
       return btarget;
     case BPredNotTaken:

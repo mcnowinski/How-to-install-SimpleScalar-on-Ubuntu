@@ -83,7 +83,8 @@ static unsigned int max_insts;
 static char *pred_type;
 
 //matt specify how many bits in the predictor config
-/* bimodal predictor config (<table_size>, <# bits>) */
+//default to 2 bits
+/* bimodal predictor config (<table_size> <# bits>) */
 static int bimod_nelt = 2;
 static int bimod_config[2] =
   { /* bimod tbl size */2048, /* # of bits */2 };
@@ -152,9 +153,9 @@ sim_reg_options(struct opt_odb_t *odb)
                  &pred_type, /* default */"bimod",
                  /* print */TRUE, /* format */NULL);
 
-//matt update bimod argument docs
+//matt update bimod argument docs to include # bits
   opt_reg_int_list(odb, "-bpred:bimod",
-		   "bimodal predictor config (<table size>, <# bits>)",
+		   "bimodal predictor config (<table_size> <# bits>)",
 		   bimod_config, bimod_nelt, &bimod_nelt,
 		   /* default */bimod_config,
 		   /* print */TRUE, /* format */NULL, /* !accrue */FALSE);
@@ -225,8 +226,6 @@ sim_check_options(struct opt_odb_t *odb, int argc, char **argv)
           fprintf(stderr, "warning: unsupported n-bit bimodal predictor. defaulting to 2-bit.\n");
       }
 
-//      fprintf(stderr, "using %d-bit bimodal predictor\n", bimod_config[1]);
-
       /* bimodal predictor, bpred_create() checks BTB_SIZE */
       pred = bpred_create(class,
 			  /* bimod table size */bimod_config[0],
@@ -264,7 +263,7 @@ sim_check_options(struct opt_odb_t *odb, int argc, char **argv)
       /* combining predictor, bpred_create() checks args */
       if (twolev_nelt != 4)
 	fatal("bad 2-level pred config (<l1size> <l2size> <hist_size> <xor>)");
-//matt comb predictor assumes 2 bit. this is kind of messy.
+//matt comb predictor uses 2 bit only. issue warning below if # bits is not 2
       if (bimod_nelt != 2)
 	fatal("bad bimod predictor config (<table_size> <# bits>)");
       if (comb_nelt != 1)
