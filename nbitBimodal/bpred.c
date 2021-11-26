@@ -794,22 +794,42 @@ bpred_lookup(struct bpred_t *pred,	/* branch predictor instance */
       return (pbtb ? pbtb->target : 1);
     }
 
+//matt I think this is where the magic is!
+//this is where we predict taken or untaken
+//this threshold is based on the number of bits in predictor, i.e. 2^n/2
+    int threshold;
+    switch(pred->class) {
+      case BPred4bit:
+        threshold = 8;
+        break;
+      case BPred3bit:
+        threshold = 4;
+        break;
+      case BPred2bit:
+        threshold = 2;
+        break;
+      default:
+        threshold = 2;
+        fprintf(stderr, "warning: unsupported n-bit bimodal predictor. defaulting to 2-bit.\n");
+    }
+
   /* otherwise we have a conditional branch */
   if (pbtb == NULL)
     {
       /* BTB miss -- just return a predicted direction */
-      return ((*(dir_update_ptr->pdir1) >= 2)
+      return ((*(dir_update_ptr->pdir1) >= threshold)
 	      ? /* taken */ 1
 	      : /* not taken */ 0);
     }
   else
     {
       /* BTB hit, so return target if it's a predicted-taken branch */
-      return ((*(dir_update_ptr->pdir1) >= 2)
+      return ((*(dir_update_ptr->pdir1) >= threshold)
 	      ? /* taken */ pbtb->target
 	      : /* not taken */ 0);
     }
 }
+//matt
 
 /* Speculative execution can corrupt the ret-addr stack.  So for each
  * lookup we return the top-of-stack (TOS) at that point; a mispredicted
@@ -1009,8 +1029,7 @@ bpred_update(struct bpred_t *pred,	/* branch predictor instance */
   /* update state (but not for jumps) */
   if (dir_update_ptr->pdir1)
     {
-//matt I think this is where the magic is!
-//this is where we increment the predictor to be *more* taken or untaken
+//matt this is where we increment the predictor to be *more* taken or untaken
 //for a saturating counter, the min is 0 and the max is determined by the number of bits, i.e. 2^n-1
       int counter_max;
       switch(pred->class) {
@@ -1027,8 +1046,6 @@ bpred_update(struct bpred_t *pred,	/* branch predictor instance */
           counter_max = 3;
           fprintf(stderr, "warning: unsupported n-bit bimodal predictor. defaulting to 2-bit.\n");
       }
-
-//      fprintf(stderr, "using counter_max=%d.\n", counter_max);
 
       if (taken)
 	{
